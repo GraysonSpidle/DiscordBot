@@ -6,14 +6,20 @@ The bot is written in NodeJS and runs on a Raspberry Pi on my home network (*it'
 This is a pet project. I don't get paid to maintain this.
 
 ## Dependencies
+#### Node Modules
 - `discordjs`: for interacting with the Discord API
 - `nodemon`: soley to restart the bot
 - `discord-paginationembed`: for the help menus
 - `cluster`: for the multithreading
 - `random-number-csprng`: rng duh
+#### Linux Packages Used
+- `tmux`: so I can ssh into the pi and start the bot without having to have the window open 24/7
 
 ## Features
-- Multithreading
+- Parallel Processing
+  - MIMD archetecture
+  - Uniform Memory Access
+  - Utilizes message passing
 - Dynamic command list
   - Add/remove commands on the fly
 - Administrator commands
