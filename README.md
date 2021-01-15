@@ -6,9 +6,11 @@ The bot is written in NodeJS and runs on a Raspberry Pi on my home network (*it'
 This is a pet project. I don't get paid to maintain this.
 
 ## Dependencies
-- `discordjs`
-- `nodemon`
-- `discordpaginationembed`
+- `discordjs`: for interacting with the Discord API
+- `nodemon`: soley to restart the bot
+- `discord-paginationembed`: for the help menus
+- `cluster`: for the multithreading
+- `random-number-csprng`: rng duh
 
 ## Features
 - Multithreading
