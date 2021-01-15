@@ -1,0 +1,840 @@
+{
+   "!order69":{
+      "regex":{
+         "pattern":"!order69(?:$| )",
+         "flags":"im"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":"put passphrase if you are an admin that requires one (you know who you are)."
+   },
+   "!adminhelp":{
+      "regex":{
+         "pattern":"!adminhelp(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+        "message":"admin-help"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":""
+   },
+   "!addcommand":{
+      "regex":{
+         "pattern":"!addcommand !(?<command_name>[A-z0-9]+) (?<command_type>.+?)(?: (?<extra>.+?))?$",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"add-command"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":"!command_name command_type extra\ncommand_name: the command name\ncommand_type: valid types are image-post and text-post\nextra: for text-post commands, put your text you want the command to post; for image-post commands, simply attach the image you want the command to use."
+   },
+   "!removecommand":{
+      "regex":{
+         "pattern":"!removecommand !(?<command_name>[A-z0-9]+)",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"remove-command"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":"!command_name\ncommand_name: the name of the command to remove"
+   },
+   "!enablecommand":{
+      "regex":{
+         "pattern":"!enablecommand !(?<command_name>[A-z0-9]+)",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"enable-command",
+         "is_mentioned":true
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":"!command_name\ncommand_name: the name of the command you want to enable."
+   },
+   "!disablecommand":{
+      "regex":{
+         "pattern":"!disablecommand !(?<command_name>[A-z0-9]+)",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"disable-command",
+         "culprit":{
+            "channelID":"760887305740484625",
+            "deleted":false,
+            "id":"779849265060642818",
+            "type":"DEFAULT",
+            "system":false,
+            "content":"!disablecommand !simulateronin",
+            "authorID":"245242590503370753",
+            "pinned":false,
+            "tts":false,
+            "nonce":"786020046148206592",
+            "embeds":[
+               
+            ],
+            "attachments":[
+               
+            ],
+            "createdTimestamp":1606000953689,
+            "editedTimestamp":0,
+            "webhookID":null,
+            "applicationID":null,
+            "activity":null,
+            "flags":0,
+            "reference":null,
+            "guildID":null,
+            "cleanContent":"!disablecommand !simulateronin"
+         },
+         "is_mentioned":true
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":"!command_name\ncommand_name: the name of the command you want to disable."
+   },
+   "!updatecommands":{
+      "regex":{
+         "pattern":"!updatecommands(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"update-commands",
+         "culprit":{
+            "channelID":"760887305740484625",
+            "deleted":false,
+            "id":"770300983372021780",
+            "type":"DEFAULT",
+            "system":false,
+            "content":"!updatecommands",
+            "authorID":"245242590503370753",
+            "pinned":false,
+            "tts":false,
+            "nonce":"770300982742482944",
+            "embeds":[
+               
+            ],
+            "attachments":[
+               
+            ],
+            "createdTimestamp":1603724465936,
+            "editedTimestamp":0,
+            "webhookID":null,
+            "applicationID":null,
+            "activity":null,
+            "flags":0,
+            "reference":null,
+            "guildID":null,
+            "cleanContent":"!updatecommands"
+         },
+         "is_mentioned":true
+      },
+      "enabled":false,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":""
+   },
+   "!blacklist":{
+      "regex":{
+         "pattern":"!blacklist *(?:<@?!@?.+>)*? *!(?<command_name>\\S+)",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"blacklist"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":"!command_name people\ncommand_name: the command name to blacklist the mentioned users from.\npeople: just mention people you'd like to blacklist using the @ functionality."
+   },
+   "!unblacklist":{
+      "regex":{
+         "pattern":"!unblacklist *(?:<@?!@?.+>)*? *!(?<command_name>\\S+)",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"unblacklist"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":true,
+      "syntax":"!command_name people\ncommand_name: the command name to unblacklist the mentioned users from.\npeople: just mention people you'd like to unblacklist using the @ functionality."
+   },
+   "!reee":{
+      "regex":{
+         "pattern":"!reee(?: |$)",
+         "flags":"im"
+      },
+      "payload": {
+         "message":"restart"
+      },
+      "enabled":true,
+      "blacklist":[
+      ],
+      "admin":true,
+      "syntax":"!reee\nIt just restarts the bot."
+   },
+   "!balliff":{
+      "regex":{
+         "pattern":"!balliff(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"balliff.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!help":{
+      "regex":{
+         "pattern":"!help(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"help"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!hug":{
+      "regex":{
+         "pattern":"!hug(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"hug.png"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!kerchoo":{
+      "regex":{
+         "pattern":"!kerchoo(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"kerchoo.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!kirbydance":{
+      "regex":{
+         "pattern":"!kirbydance(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"text-post",
+         "text":"<(0_0<) <(0_0)> (>0_0)>"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!muda":{
+      "regex":{
+         "pattern":"!muda(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"muda.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!oatmeal":{
+      "regex":{
+         "pattern":"!oatmeal(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"oatmeal.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+         "758026847811534868"
+      ]
+   },
+   "!oatmealdog":{
+      "regex":{
+         "pattern":"!oatmealdog(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"oatmealdog.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!proopeen":{
+      "regex":{
+         "pattern":"!proopeen(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"proopeen.png"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!wham":{
+      "regex":{
+         "pattern":"!wham(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"wham.png"
+      },
+      "enabled":true,
+      "blacklist":[
+      ]
+   },
+   "!wtf":{
+      "regex":{
+         "pattern":"!wtf(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"wtf.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!simulateronin":{
+      "regex":{
+         "pattern":"!simulateronin(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"ronin-text-post",
+         "text_path":"ronin_monologues.txt"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!perhaps":{
+      "regex":{
+         "pattern":"!perhaps(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"perhaps.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+      ]
+   },
+   "!ballin":{
+      "regex":{
+         "pattern":"!ballin(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"ballin.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!hardno":{
+      "regex":{
+         "pattern":"!hardno(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"hardno.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!boys":{
+      "regex":{
+         "pattern":"!boys(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"boys.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!woodyreverse":{
+      "regex":{
+         "pattern":"!woodyreverse(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"woodyreverse.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!ferretfact":{
+      "regex":{
+         "pattern":"!ferretfact(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"ferret-fact-post",
+         "text_path":"ferret_facts.txt"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!no":{
+      "regex":{
+         "pattern":"!no(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"no.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!frost":{
+      "regex":{
+         "pattern":"!frost(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"Frost.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!stripe":{
+      "regex":{
+         "pattern":"!stripe(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"Stripe.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!eyeroll":{
+      "regex":{
+         "pattern":"!eyeroll(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"eyeroll.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!waifu":{
+      "regex":{
+         "pattern":"!waifu(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"waifu.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!run":{
+      "regex":{
+         "pattern":"!run(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"run.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!love":{
+      "regex":{
+         "pattern":"!love(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"love.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!dosomething":{
+      "regex":{
+         "pattern":"!dosomething(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"dosomething.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!power":{
+      "regex":{
+         "pattern":"!power(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"power.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!thicc":{
+      "regex":{
+         "pattern":"!thicc(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"thicc.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!mods":{
+      "regex":{
+         "pattern":"!mods(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"mods.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!excited":{
+      "regex":{
+         "pattern":"!excited(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"excited.png"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!lily":{
+      "regex":{
+         "pattern":"!lily(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"lily.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!law":{
+      "regex":{
+         "pattern":"!law(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"law.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!hit":{
+      "regex":{
+         "pattern":"!hit(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"hit.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!cursify":{
+      "regex":{
+         "pattern":"!cursify (?<text>.+)$",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"cursify"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!cheems": {
+      "regex":{
+         "pattern":"!cheems (?<text>.+)$",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"cheemsify"
+      },
+      "enabled":true,
+      "blacklist":[
+      ],
+      "admin":false
+   },
+   "!sturpls":{
+      "regex":{
+         "pattern":"!sturpls(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"sturpls.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!bonk":{
+      "regex":{
+         "pattern":"!bonk(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"bonk.png"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!fbi":{
+      "regex":{
+         "pattern":"!fbi(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"fbi.jpg"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!cocaine":{
+      "regex":{
+         "pattern":"!cocaine(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"cocaine.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!dewit":{
+      "regex":{
+         "pattern":"!dewit(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"dewit.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!catfact":{
+      "regex":{
+         "pattern":"!catfact(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"text-post",
+         "text":"Cats are little shits."
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ]
+   },
+   "!sith":{
+      "regex":{
+         "pattern":"!sith(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"sith.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   },
+   "!yes":{
+      "regex":{
+         "pattern":"!yes(?:$| )",
+         "flags":"im"
+      },
+      "payload":{
+         "message":"image-post",
+         "image_path":"yes.gif"
+      },
+      "enabled":true,
+      "blacklist":[
+         
+      ],
+      "admin":false
+   }
+}
