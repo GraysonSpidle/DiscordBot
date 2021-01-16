@@ -3,6 +3,14 @@ const cluster = require("cluster");
 
 const client = new Discord.Client();
 
+const special_users = process.env["special_users"];
+
+const new_arrivals_channel_id = "783383349552480276";
+const identification_log_channel_id = "783400602247757867";
+const newcomer_role_id = "771956823321739294"; 
+
+// ========================= FUNCTIONS =========================
+
 function get_timestamp() {
     var date = new Date();
     return `[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}:${date.getMilliseconds()}]`;
@@ -24,12 +32,15 @@ function get_timestamp() {
     };
 })();
 
+// ========================= EVENT LISTENERS =========================
 
 client.on("ready", () => {});
 
 // This handles whenever someone joins the server
 client.on("guildMemberAdd", (member) => {
     if (member.user.bot) return; // Ignore bots
+          
+    let addedRole = false;
 
     // Plan A - Slide in those DMs
     member.createDM().then(async (dm_channel) => {
@@ -37,27 +48,26 @@ client.on("guildMemberAdd", (member) => {
         .then(async () => {
             await dm_channel.awaitMessages(m => m.author.id == member.user.id, {max: 1})
             .then(async (collected) => { // Posting the identification message in the log
-                await client.channels.fetch("783400602247757867").then(async (identification_log) => {
+                await client.channels.fetch(identification_log_channel_id, true)
+                .then(async (identification_log) => { // post the identification message in the log
                     await identification_log.send(`<@${member.id}> identified him/herself with:\n> ${collected.first().content}`);
                 });
             })
             .then(async () => { // Adding the role
-                await member.guild.roles.fetch("771956823321739294").then(async (role) => {
+                await member.guild.roles.fetch(newcomer_role_id, true).then(async (role) => {
                     await member.roles.add(role, "Added role to new person").then((member) => {console.log(`Added default role to ${member.displayName}`)});
+                }).then(() => {
+                    addedRole = true;
                 }).catch(async (reason) => {
-                    await client.channels.fetch("757387785605873675").then((channel) => { // Azazel Chat
-                        channel.send(`Failed to add the default role to newcomer named ${member.displayName}`);
-                    }).catch(reason => {
-                        console.error("Auto role adder failed multiple times.");
-                    });
+                    console.error("Auto role adder failed multiple times.");
                 });
             });
         });
     }).catch(async (reason) => {
-        if (reason.code == Discord.Constants.APIErrors.CANNOT_MESSAGE_USER) {
+        if (reason.code == Discord.Constants.APIErrors.CANNOT_MESSAGE_USER) { // This means we cannot DM the person
 
             // Plan B - Use the identification channel
-            await client.channels.fetch("783383349552480276") // new-arrivals channel
+            await client.channels.fetch(new_arrivals_channel_id, true)
             .then((new_arrivals) => {
                 new_arrivals.createOverwrite(member, {SEND_MESSAGES: true, VIEW_CHANNEL: true}, "vetting identification system")
                 .catch((error) => console.error(error))
@@ -66,7 +76,8 @@ client.on("guildMemberAdd", (member) => {
                     .then(async () => {
                         await new_arrivals.awaitMessages(m => m.author.id == member.user.id, {max: 1})
                         .then(async (collected) => {
-                            await client.channels.fetch("783400602247757867").then(async (identification_log) => {
+                            await client.channels.fetch(identification_log_channel_id, true)
+                            .then(async (identification_log) => {
                                 await identification_log.send(`<@${member.id}> identified him/herself with:\n> ${collected.first().content}`);
                             });
                         });
@@ -74,25 +85,39 @@ client.on("guildMemberAdd", (member) => {
                 }).then(async () => {
                     await new_arrivals.updateOverwrite(member, {SEND_MESSAGES: false, VIEW_CHANNEL: false}, "vetting identification system")
                     .then(async () => { // Adding the role
-                        await member.guild.roles.fetch("771956823321739294").then(async (role) => {
-                            await member.roles.add(role, "Added role to new person").then((member) => {console.log(`Added default role to ${member.displayName}`)});
+                        await member.guild.roles.fetch(newcomer_role_id, true).then(async (role) => {
+                            await member.roles.add(role, "Added role to new person")
+                            .then((member) => {console.log(`Added default role to ${member.displayName}`)})
+                            .then(() => {addedRole = true;});
                         });
                     });
                 });
             });
         } else {
-            client.users.fetch("245242590503370753", true).then((me) => {
-                me.dmChannel.send(`Failed to add role to newcomer: ${reason}`);
-            })
+            for (const id of special_users.developer) {
+                client.users.fetch(id, true).then((dev) => {
+                    dev.dmChannel.send(`Failed to add role to newcomer: ${reason}`);
+                });
+            }
         }
     }).catch((reason) => {
         console.error(`there was an error in the new person identification system: ${reason}`);
     });
 
     // // This is the fall back plan
-    // member.guild.roles.fetch("771956823321739294").then(async (role) => {
+    // member.guild.roles.fetch(newcomer_role_id).then(async (role) => {
     //     member.roles.add(role, "added role to newcomer");
+    //     addedRole = true;
     // });
+    
+    if (addedRole) {
+        client.channels.fetch("779852310649372723", true)
+        .then(async (general_chat) => {
+            await general_chat.send(`Welcome to the server <@${member.id}>! Be sure to read <#750976189400875028> and enjoy your stay!`);
+        });
+    }
 });
+
+// ========================= MAIN =========================
 
 client.login(process.env["login_token"]);

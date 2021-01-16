@@ -6,8 +6,6 @@ const https = require("https");
 
 const client = new Discord.Client();
 
-var last_ronin_monologues_used = [];
-
 function get_timestamp() {
     var date = new Date();
     return `[${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}:${date.getMilliseconds()}]`;
@@ -95,15 +93,8 @@ const commands = {
                     });
                 }).then(async (n) => {
                     new Promise(async (resolve,reject) => {
-                        var num = 0;
-                        do {
-                            num = await random_number(0, n - 1);
-                        } while (last_ronin_monologues_used.includes(num));
+                        var num = await random_number(0, n - 1);
                         resolve(num);
-                        if (last_ronin_monologues_used.length == Math.floor(n / 2)) {
-                            delete last_ronin_monologues_used[0];
-                        }
-                        last_ronin_monologues_used.push(num);
                     })
                     .catch((reason) => {
                         console.error(`Error in generating random number. Maximum ${n}`);
@@ -230,7 +221,6 @@ const commands = {
                                     "image_path": `${save_image_path}`
                                 },
                                 "enabled": true,
-                                "blacklist": [],
                                 "admin": false
                             };
                             send_update_commands(`${culprit.authorID} added an ${command_type} command called !${command_name}`, commands);
@@ -256,8 +246,7 @@ const commands = {
                                 "message": `${command_type}`,
                                 "text": `${extra}`
                             },
-                            "enabled": true,
-                            "blacklist": []
+                            "enabled": true
                         };
                         fs.writeFileSync(__dirname + "/commands.json", JSON.stringify(commands));
                         send_update_commands(`${culprit.authorID} added an ${command_type} command called !${command_name}`, commands);
@@ -282,7 +271,15 @@ const commands = {
                 } else {
                     switch (command.payload.message) {
                         case "image-post":
-                            fs.unlinkSync(command.payload.image_path);
+                            try {
+                                fs.unlinkSync(command.payload.image_path); // deleting image that goes along with it
+                            } catch (e) {
+                                if (e.code == "ENOENT") { // The image doesn't exist
+                                    // This shouldn't matter. As long as we're not saving images in a different place.
+                                } else {
+                                    throw e;
+                                }
+                            }
                             delete commands[`!${command_name}`];
                             fs.writeFileSync(__dirname + "/commands.json", JSON.stringify(commands));
                             send_update_commands(`${culprit.authorID} removed !${command_name}`, commands);
@@ -333,6 +330,7 @@ const commands = {
             var exceptions = {
                 bad: "bamd",
                 batman: "bamtman",
+                cheems: "cheems",
                 cheeseburger: "cheemsburger",
                 motherfucker: "momtherfumcker",
                 walter: "walmter"
@@ -341,6 +339,7 @@ const commands = {
             var words = text.match(/(\S+)/gm);
             var output = [];
             for (const word of words) {
+                if (word.match(/<@!?&?\d+>/gm) != null) continue; // skip words that are tags
                 var skip = false;
                 for (const exception in exceptions) {
                     var match = word.match(new RegExp(`\\b${exception}\\b`, "im"));
@@ -356,12 +355,20 @@ const commands = {
                     continue;
                 }
                 
+                // Yeah this regex pattern is gory to say the least
                 const regex_pattern = /([A-z]*?)(?:(?<!m)(?=[aeiou]+[^m])([aeiou]+)(?=[^l]{1,})(?:([w]+?|(?=r[^aeiou])r))?)(\S+)/im;
                 const replace = "$1$2$3m$4";
                 var cheems_word = word.replace(regex_pattern, replace);
                 output.push(cheems_word);
             }
-            channel.send(output.join(" "));
+            channel.send(output.join(" "))
+            .catch((error) => {
+                if (error.code == Discord.Constants.APIErrors.CANNOT_SEND_EMPTY_MESSAGE) {
+                    // Do nothing
+                } else {
+                    throw error;
+                }
+            });
         });
     }
 };
@@ -369,7 +376,7 @@ const commands = {
 process.on("message", async (payload) => {
     for (const key in commands) {
         if (payload.message == key) {
-            commands[key](payload).catch((reason) => { // signal the manager this worker is ready
+            commands[key](payload).catch((reason) => {
                 console.error(reason);
             });
         }

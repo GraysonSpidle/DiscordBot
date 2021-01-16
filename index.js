@@ -1,6 +1,5 @@
 const Discord = require("discord.js");
 const cluster = require("cluster");
-const shutdown_credentials = require(__dirname + "/shutdown_credentials.js");
 const fs = require("fs");
 const Pagination = require('discord-paginationembed');
 var nodemon = require("nodemon");
@@ -15,6 +14,14 @@ var numCPUs = require("os").cpus().length;
 var worker_availability = {};
 var newcomer_handler = null;
 var wotd_handler = null;
+
+var commands = require(__dirname + "/commands.json");
+
+const special_users = require(__dirname + "/special_users.json");
+
+var blacklist = require(__dirname + "/blacklist.json");
+
+// ===================== FUNCTIONS =====================
 
 function get_timestamp() {
     var date = new Date();
@@ -62,24 +69,6 @@ function send_payload(payload) {
 
 async function cleanup() {
     client.destroy();
-    var shutdown_promises = [];
-    shutdown_promises.push(new Promise((resolve,reject) => {
-        var children = [
-            newcomer_handler,
-            wotd_handler
-        ];
-        for (const child of children) {
-            child.kill();
-        }
-        setTimeout(() => {
-            for (const child of children) {
-                if (!child.isDead()) {
-                    child.process.kill("SIGKILL");
-                }
-            }
-            resolve();
-        }, 3000);
-    }));
     for (const id in cluster.workers) {
         shutdown_promises.push(new Promise((resolve,reject) => {
             cluster.workers[id].kill(); // Tries to gracefully kill the worker
@@ -100,9 +89,161 @@ async function cleanup() {
     })());
 }
 
-var commands = require(__dirname + "/commands.json");
+async function admin_help(message) {
+    let elements_array = [];
+    for (const key in commands) {
+        if (!commands[key].admin || !commands[key].enabled) continue;
+        elements_array.push({name: `**${key}** ${commands[key].syntax}`});
+    }
 
-const special_users = require(__dirname + "/special_users.json");
+    const FieldsEmbed = new Pagination.FieldsEmbed()
+    .setArray(elements_array)
+    .setAuthorizedUsers(special_users.developer.concat([message.author.id]))
+    .setChannel(message.channel)
+    .setElementsPerPage(5)
+    .setPage("back")
+    .setDeleteOnTimeout(true)
+    .setTimeout(2 * 60 * 1000) // 2 minutes
+    .setPageIndicator(true)
+    .formatField("Name", i => i.name);
+
+    FieldsEmbed.embed
+    .setDescription("**Admin Help Menu**\nPress the < > and ^ reactions to navigate through pages.");
+
+    await FieldsEmbed.build();
+}
+
+function blacklist_users(message, match_arr) {
+    /** Blacklists users (duh) */
+    
+    let command_name = match_arr.groups["command_name"];
+    let ids = message.mentions.users // getting mentioned users first
+    .filter((value, key) => { // disable the ability to blacklist yourself from a command
+        return message.author.id != key;
+    })
+    .filter((value, key) => { // enforce a hierarchy of admins of who can blacklist who from a command
+        if (special_users.developer.includes(message.author.id)) {
+            return true;
+        } else if (special_users.super_admins.includes(message.author.id)) {
+            return !special_users.super_admins.includes(key);
+        } else {
+            return !special_users.admins.includes(key);
+        }
+    })
+    .filter((value, key) => { // ensure that the user isn't already blacklisted
+        return !(command_name in blacklist) || !blacklist[command_name].includes(key);
+    })
+    .keyArray();
+    
+    // now getting the unique ids that could've been pasted in a comma delimited list
+    for (const id of match_arr.groups["ids"].match(/(\d+),? ?/g)) {
+        if (ids.includes(id)) continue;
+        ids.push(id);
+    }
+    
+    // Now we'll add the users to the blacklist
+    for (let i = 0; i < ids.length; i++) {
+        if (!(command_name in blacklist)) {
+            blacklist[command_name] = [];
+        }
+        blacklist[command_name].push(ids[i]);
+    }
+    
+    if (ids.length) {
+        fs.writeFileSync(__dirname + "/blacklist.json", JSON.stringify(blacklist)); // Write the changes to the file
+        message.reply(`Blacklisted ${ids.length} people.`);
+        console.log(`${message.author.username}(${message.author.id}) blacklisted ${ids} from using ${command_name}`);
+    } else { // ids.length == 0
+        message.reply("Blacklisted no one.");
+    }
+}
+
+function unblacklist_users(message, match_arr) {
+    let command_name = match_arr.groups["command_name"];
+    let ids = message.mentions.users
+    .filter((value,key) => {
+        return !(command_name in blacklist) || !blacklist[command_name].includes(key);
+    })
+    .keyArray();
+    
+    // now getting the unique ids that could've been pasted in a comma delimited list
+    for (const id of match_arr.groups["ids"].match(/(\d+),? ?/g)) {
+        if (ids.includes(id)) continue;
+        ids.push(id);
+    }
+    
+    // Now we'll remove the users from the blacklist
+    for (let i = 0; i < ids.length; i++) {
+        let index = blacklist[command_name].indexOf(ids[i]);
+        delete blacklist[command_name][index];
+    }
+    
+    if (ids.length) {
+        fs.writeFileSync(__dirname + "/blacklist.json", JSON.stringify(blacklist));
+        message.reply(`Unblacklisted ${ids.length} people.`);
+        console.log(`${message.author.username}(${message.author.id}) unblacklisted ${ids} from using ${command_name}`);
+    } else { // ids.length == 0
+        message.reply("Unblacklisted no one.");
+    }
+}
+
+async function shutdown(message) {
+    if (special_users.admins.includes(message.author.id)) {
+        console.log(`${message.author.username}(${message.author.id}) initiated a shutdown.`);
+        for (const developer of special_users.developer) { // Notify the developers that a shutdown has been initiated
+            await client.users.fetch(developer).then(async (user) => {
+            await user.createDM().then(async (dm_channel) => {
+                await dm_channel.send(`${message.author.username}(${message.author.id}) initiated a shutdown.`).catch((reason) => console.error(`Couldn't send dad a DM because: ${reason}`));
+                });
+            });
+        }
+        await message.reply("Authorization confirmed.");
+        process.exit();
+    } else {
+        message.reply("Invalid authorization: Access denied");
+        console.log(`Username ${message.author.username} with id ${message.author.id} attempted a shutdown in #${message.channel.name}.`);
+    }
+}
+
+function add_command(message, match_arr, payload) {
+    for (const key in match_arr.groups) {
+        payload[key] = match_arr.groups[key];
+    }
+    switch (match_arr.groups["command_type"]) {
+        case "image-post":
+            if (message.attachments.array().length < 1) {
+                message.reply("Invalid Syntax: must supply an image.");
+                break;
+            }
+            let image = message.attachments.array()[0];
+
+            payload.save_image_path = __dirname + `/images/${match_arr.groups["command_name"]}${image.name.match(/\..+$/im)}`;
+            payload.image_url = image.attachment;
+            
+            send_payload(payload);
+            break;
+        case "text-post":
+            send_payload(payload);
+            break;
+        default:
+            break;
+    }
+}
+
+function disable_command(message, match_arr) {
+    let command_name = `!${match_arr.groups["command_name"]}`;
+    if (commands[command_name].admin || command_name == "help") {
+        message.reply("You cannot disable admin/essential commands.");
+        break;
+    }
+    commands[command_name].enabled = false;
+    try {
+        fs.writeFileSync(__dirname + `/commands.json`, JSON.stringify(commands, null, 2));
+        message.reply("Disabled the command successfully.");
+    } catch (e) {
+        message.reply("There was an error in disabling the command.");
+    }
+}
 
 // ========================== EVENT LISTENERS ========================== 
 
@@ -123,7 +264,9 @@ cluster.on("message", (worker, message) => {
     }
 });
 
+// Whenever a worker comes online, this gets fired.
 cluster.on("online", (worker) => {
+    // If we add a new worker during runtime, then this will allow the manager to know about it
     switch (worker_availability[worker.id]) {
         case null:
         case undefined:
@@ -131,6 +274,14 @@ cluster.on("online", (worker) => {
             break;
         default:
             break;
+    }
+});
+
+// Whenever a worker goes offline, this gets fired.
+cluster.on("exit", (worker, code, signal) => {
+    if (worker_availability.includes(worker.id)) {
+        delete worker_availability[worker.id];
+        console.log(`Removed worker ${worker.id} because it exited prematurely`);
     }
 });
 
@@ -159,7 +310,7 @@ client.on("message", async (message) => {
     for (const key in commands) {
         let command = commands[key];
 
-        if (!command.enabled || command.blacklist.includes(message.author.id)) continue;
+        if (!command.enabled || (key in blacklist && blacklist[key].includes(message.author.id))) continue;
 
         var match_arr = message.content.match(new RegExp(command.regex.pattern, command.regex.flags)); // Using regex, we will look for commands
         if (match_arr != null) { // if there's a regex hit.
@@ -170,112 +321,20 @@ client.on("message", async (message) => {
             if (special_users.admins.includes(message.author.id)) { // Admin Commands
                 switch (command.payload.message) {
                     case "shutdown":
-                        let credentials = shutdown_credentials.shutdown_credentials[message.author.id];
-                        if (credentials != null && credentials != undefined) {
-                            if (credentials(message)) {
-                                console.log(`${message.author.username}(${message.author.id}) initiated a shutdown.`);
-                                for (const developer of special_users.developer) {
-                                    await client.users.fetch(developer).then(async (user) => {
-                                    await user.createDM().then(async (dm_channel) => {
-                                        await dm_channel.send(`${message.author.username}(${message.author.id}) initiated a shutdown.`).catch((reason) => console.error(`Couldn't send dad a DM because:        ${reason}`));
-                                        });
-                                    });
-                                }
-                                await message.reply("Authorization confirmed.");
-                                process.exit();
-                            } else {
-                                message.reply("Invalid authorization: Incorrect passphrase.");
-                            }
-                        } else {
-                            message.reply("Invalid authorization: Access denied.");
-                            console.log(`Username ${message.author.username} with id ${message.author.id} attempted a shutdown in #${message.channel.name}.`);
-                        }
+                        await shutdown(message);
                         return;
                     case "admin-help":
                         if (!is_mentioned) break;
-                        var elements_array = [];
-                        for (const key in commands) {
-                            if (!commands[key].admin || !commands[key].enabled) continue;
-                            elements_array.push({name: `**${key}** ${commands[key].syntax}`});
-                        }
-
-                        const FieldsEmbed = new Pagination.FieldsEmbed()
-                        .setArray(elements_array)
-                        .setAuthorizedUsers(special_users.developer.concat([message.author.id]))
-                        .setChannel(message.channel)
-                        .setElementsPerPage(5)
-                        .setPage("back")
-                        .setDeleteOnTimeout(true)
-                        .setTimeout(2 * 60 * 1000) // 2 minutes
-                        .setPageIndicator(true)
-                        .formatField("Name", i => i.name);
-    
-                        FieldsEmbed.embed
-                        .setDescription("**Admin Help Menu**\nPress the < > and ^ reactions to navigate through pages.");
-    
-                        await FieldsEmbed.build();
+                        admin_help(message);
                         return;
                     case "blacklist":
-                        let bids = message.mentions.users
-                        .filter((value, key) => {
-                            return !special_users.admins.includes(key);
-                        })
-                        .filter((value, key) => {
-                            return !commands[`!${match_arr.groups["command_name"]}`].blacklist.includes(key);
-                        })
-                        .keyArray();
-                        for (let i = 0; i < bids.length; i++) {
-                            commands[`!${match_arr.groups["command_name"]}`].blacklist.push(bids[i]);
-                        }
-                        if (bids.length) {
-                            fs.writeFileSync(__dirname + "/commands.json", JSON.stringify(commands));
-                            message.reply(`Blacklisted ${bids.length} people.`);
-                            console.log(`${message.author.username}(${message.author.id}) blacklisted ${bids} from using !${match_arr.groups["command_name"]}`);
-                        } else {
-                            message.reply("Blacklisted no one.");
-                        }
+                        blacklist_users(message, match_arr);
                         return;
                     case "unblacklist":
-                        let ids = message.mentions.users
-                        .filter((value,key) => {
-                            return commands[`!${match_arr.groups["command_name"]}`].blacklist.includes(key);
-                        })
-                        .keyArray();
-                        for (let i = 0; i < ids.length; i++) {
-                            let index = commands[`!${match_arr.groups["command_name"]}`].blacklist.indexOf(ids[i]);
-                            delete commands[`!${match_arr.groups["command_name"]}`].blacklist[index];
-                        }
-                        if (ids.length) {
-                            fs.writeFileSync(__dirname + "/commands.json", JSON.stringify(commands));
-                            message.reply(`Unblacklisted ${ids.length} people.`);
-                            console.log(`${message.author.username}(${message.author.id}) unblacklisted ${ids} from using !${match_arr.groups["command_name"]}`);
-                        } else {
-                            message.reply("Unblacklisted no one.");
-                        }
+                        unblacklist_users(message, match_arr);
                         return;
                     case "add-command":
-                        payload.command_name = match_arr.groups["command_name"];
-                        payload.command_type = match_arr.groups["command_type"];
-                        payload.extra = match_arr.groups["extra"];
-                        switch (match_arr.groups["command_type"]) {
-                            case "image-post":
-                                if (message.attachments.array().length < 1) {
-                                    message.reply("Invalid Syntax: must supply an image.");
-                                    break;
-                                }
-                                var image = message.attachments.array()[0];
-
-                                payload.save_image_path = __dirname + `/${match_arr.groups["command_name"]}${image.name.match(/\..+$/im)}`;
-                                payload.image_url = image.attachment;
-                                
-                                send_payload(payload);
-                                break;
-                            case "text-post":
-                                send_payload(payload);
-                                break;
-                            default:
-                                break;
-                        }
+                        add_command(message, match_arr, payload);
                         return;
                     case "remove-command":
                         payload.command_name = match_arr.groups["command_name"];
@@ -292,17 +351,7 @@ client.on("message", async (message) => {
                         fs.writeFileSync(__dirname + `/commands.json`, JSON.stringify(commands, null, 2));
                         return;
                     case "disable-command":
-                        if (commands[`!${match_arr.groups["command_name"]}`].admin || `${match_arr.groups["command_name"]}` == "help") {
-                            message.reply("You cannot disable admin/essential commands.");
-                            break;
-                        }
-                        commands[`!${match_arr.groups["command_name"]}`].enabled = false;
-                        try {
-                            fs.writeFileSync(__dirname + `/commands.json`, JSON.stringify(commands, null, 2));
-                            message.reply("Disabled the command successfully.");
-                        } catch (e) {
-                            message.reply("There was an error in disabling the command.");
-                        }
+                        disable_command(message, match_arr);
                         return;
                     case "ronin-text-post":
                         if (message.channel.id == "757387785605873675") { // Azazel Chat
@@ -396,6 +445,11 @@ console.log(`Creating ${numCPUs - 1} workers...`);
 
 cluster.setupMaster({exec: "worker.js"}); // setting up the cluster.fork() command so it makes workers.
 
+var worker_env = {
+    login_token: login_token,
+    special_users: special_users
+};
+
 // Logging in the discord client
 client.login(login_token)
 .catch((error) => {
@@ -406,7 +460,7 @@ client.login(login_token)
             process.kill();
             break;
         case Discord.Constants.APIErrors.INVALID_AUTHENTICATION_TOKEN:
-            console.error("FATAL Invalid Authentication Token");
+            console.error("Check the authentication token and make sure it is valid");
             process.kill();
             break;
         // ======= RETRY ERRORS =======
@@ -436,7 +490,7 @@ client.login(login_token)
         if (!numCPUs) reject("Cannot make less than 1 worker.");
 
         for (var i = 0; i < numCPUs - 1; i++) {
-            let worker = cluster.fork({login_token: login_token});
+            let worker = cluster.fork(worker_env);
             worker_availability[worker.id] = false;
         }
 
@@ -458,12 +512,12 @@ client.login(login_token)
     console.log("Creating newcomer handler...");
 
     cluster.setupMaster({exec: "newcomer_handler.js"}); // setting up the cluster.fork() command so it makes the newcomer handler
-    newcomer_handler = cluster.fork({login_token: login_token});    
+    newcomer_handler = cluster.fork(worker_env);    
 })
 .then(() => {
     console.log("Creating wotd handler...");
     
     cluster.setupMaster({exec: "wotd_handler.js"});
-    wotd_handler = cluster.fork({login_token: login_token});
+    wotd_handler = cluster.fork(worker_env);
 })
 .then(() => console.log("Everything is good to go!"));
